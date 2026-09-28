@@ -1,5 +1,5 @@
 // Offline Service Worker for Dynamic GST Invoice Generator
-const CACHE_NAME = 'invoice-generator-pwa-v1';
+const CACHE_NAME = 'invoice-generator-pwa-v2';
 
 // Essential assets to pre-cache on first load
 const PRECACHE_ASSETS = [
@@ -8,6 +8,8 @@ const PRECACHE_ASSETS = [
     './manifest.json',
     'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
     'https://unpkg.com/lucide@latest',
     'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap'
 ];

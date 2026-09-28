@@ -15,6 +15,13 @@
     <!-- pdfMake for robust client-side PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <!-- pdf.js for robust client-side PDF parsing and prefilling -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -49,10 +56,18 @@
             --shadow-floating: 0 20px 40px -10px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
-        html, body {
+        html {
             width: 100%;
             max-width: 100vw;
             overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: clip;
             margin: 0;
             padding: 0;
         }
@@ -79,7 +94,7 @@
             width: 100%;
             max-width: 100%;
             margin: 0 auto;
-            padding: 0.85rem 1.25rem;
+            padding: 0.75rem 1.25rem;
             box-sizing: border-box;
         }
 
@@ -117,28 +132,36 @@
             width: 100%;
         }
 
-        /* Apple HIG Segmented Navigation Tabs */
+        /* Apple HIG Segmented Navigation Tabs (Sticky Top Header) */
         .step-tabs {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0.5rem;
+            z-index: 100;
             display: flex;
             gap: 0.35rem;
-            background: rgba(120, 120, 128, 0.1);
-            padding: 0.35rem;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 0.4rem;
             border-radius: 14px;
-            border: 1px solid rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03);
             margin-bottom: 1.25rem;
             width: 100%;
             box-sizing: border-box;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.2s ease;
         }
 
         @media (max-width: 640px) {
             .step-tabs {
+                top: 0.35rem;
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 0.35rem;
                 padding: 0.35rem;
-                background: rgba(120, 120, 128, 0.12);
+                background: rgba(255, 255, 255, 0.95);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
             }
             .tab-btn {
                 min-width: 0 !important;
@@ -153,14 +176,7 @@
 
         @media (min-width: 641px) {
             .step-tabs {
-                position: sticky;
-                top: 0.5rem;
-                z-index: 50;
-                background: rgba(255, 255, 255, 0.85);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-                border: 1px solid rgba(0, 0, 0, 0.06);
+                top: 0.6rem;
             }
         }
 
@@ -892,6 +908,271 @@
             to { transform: translateY(0) scale(1); opacity: 1; }
         }
 
+        /* PDF Import Banner Card */
+        .pdf-import-banner {
+            background: linear-gradient(135deg, #f8fafc 0%, #eef6ff 100%);
+            border: 1.5px dashed rgba(0, 113, 227, 0.35);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.15rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            transition: all 0.2s ease;
+        }
+
+        .pdf-import-banner:hover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #f0f7ff 0%, #e0effe 100%);
+        }
+
+        .pdf-import-banner-content {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .pdf-import-banner-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: white;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.12);
+            flex-shrink: 0;
+        }
+
+        .pdf-import-banner-text h3 {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 0.15rem 0;
+        }
+
+        .pdf-import-banner-text p {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* PDF Import Modal */
+        .pdf-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: modalFadeIn 0.2s ease-out forwards;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .pdf-modal-dialog {
+            background: #ffffff;
+            border-radius: var(--radius-xl);
+            max-width: 580px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes modalScaleIn {
+            from { transform: scale(0.94) translateY(12px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .pdf-modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 10;
+        }
+
+        .pdf-modal-body {
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.15rem;
+        }
+
+        .pdf-modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            background: #fbfbfd;
+            border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        }
+
+        .doc-summary-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .doc-summary-badge.tax-invoice {
+            background: #e8f2fd;
+            color: #0071e3;
+            border: 1px solid rgba(0, 113, 227, 0.2);
+        }
+
+        .doc-summary-badge.quotation {
+            background: #fef3c7;
+            color: #d97706;
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }
+
+        .doc-summary-badge.estimate {
+            background: #f3e8ff;
+            color: #7e22ce;
+            border: 1px solid rgba(126, 34, 206, 0.2);
+        }
+
+        .pdf-parsed-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .pdf-parsed-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pdf-parsed-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .pdf-parsed-item .label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .pdf-parsed-item .value {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-main);
+            word-break: break-word;
+        }
+
+        .import-option-box {
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0.85rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .import-option-box:hover {
+            border-color: var(--primary);
+            background: var(--surface-subtle);
+        }
+
+        .import-option-box.active {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .import-option-box input[type="radio"] {
+            margin-top: 0.2rem;
+            accent-color: var(--primary);
+        }
+
+        .import-option-box-text h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 0.15rem 0;
+        }
+
+        .import-option-box-text p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* Fullscreen Drag & Drop Overlay */
+        .drag-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 113, 227, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            color: #ffffff;
+            pointer-events: none;
+            animation: modalFadeIn 0.15s ease-out;
+        }
+
+        .drag-overlay-box {
+            border: 3px dashed rgba(255, 255, 255, 0.85);
+            border-radius: var(--radius-xl);
+            padding: 3rem 4rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
         /* Quick Profile Buttons */
         .profile-actions {
             display: flex;
@@ -906,6 +1187,9 @@
 
     <!-- Main Content Container (Full Viewport Height) -->
     <main class="app-container">
+
+        <!-- Hidden PDF File Input for Universal Prefill -->
+        <input type="file" id="pdfFileInput" accept=".pdf,application/pdf" style="display: none;" onchange="handlePdfFileSelected(event)">
 
         <!-- Navigation Tabs / Flow -->
         <nav class="step-tabs">
@@ -933,6 +1217,24 @@
                 
                 <!-- TAB 1: SELLER & BANK DETAILS -->
                 <section id="tab-seller" class="tab-content">
+
+                    <!-- Quick PDF Import Banner -->
+                    <div class="pdf-import-banner">
+                        <div class="pdf-import-banner-content">
+                            <div class="pdf-import-banner-icon">
+                                <i data-lucide="upload-cloud" style="width: 22px; height: 22px;"></i>
+                            </div>
+                            <div class="pdf-import-banner-text">
+                                <h3>Want to update an existing invoice / quotation?</h3>
+                                <p>Upload any PDF generated with this app to automatically prefill all details, line items & rates.</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="triggerPdfUpload()" style="font-weight: 700; gap: 0.4rem;">
+                            <i data-lucide="file-up" style="width: 15px; height: 15px;"></i>
+                            <span>Upload PDF</span>
+                        </button>
+                    </div>
+
                     <div class="card">
                         <div class="card-header">
                             <div>
@@ -3310,6 +3612,60 @@
                 }
             };
 
+            // Build structured state payload for exact lossless round-trip re-import
+            const invoicePayload = {
+                app: 'GST_INVOICE_GENERATOR',
+                version: '2.0',
+                timestamp: new Date().toISOString(),
+                sellerProfile: Object.assign({}, sellerProfile),
+                buyerData: Object.assign({}, buyerData),
+                invoiceMeta: Object.assign({}, invoiceMeta, {
+                    billType: billType,
+                    taxType: activeTaxType,
+                    itemFlavor: invoiceMeta.itemFlavor || 'STANDARD',
+                    invoiceNo: getVal('invoiceNo') || invoiceMeta.invoiceNo,
+                    invoiceDate: getVal('invoiceDate') || invoiceMeta.invoiceDate,
+                    deliveryNote: getVal('deliveryNote'),
+                    modeTermsOfPayment: getVal('modeTermsOfPayment'),
+                    suppliersRef: getVal('suppliersRef'),
+                    otherRef: getVal('otherRef'),
+                    buyersOrderNo: getVal('buyersOrderNo'),
+                    buyersOrderNoDated: getVal('buyersOrderNoDated'),
+                    dispatchDocNo: getVal('dispatchDocNo'),
+                    dispatchDocNoDated: getVal('dispatchDocNoDated'),
+                    dispatchedThrough: getVal('dispatchedThrough'),
+                    destination: getVal('destination'),
+                    termsOfDelivery: getVal('termsOfDelivery')
+                }),
+                products: JSON.parse(JSON.stringify(products)),
+                roundOff: parseFloat((document.getElementById('roundOffInput') && document.getElementById('roundOffInput').value) || 0) || 0
+            };
+
+            // Sync latest input values into payload
+            ['sellerName', 'sellerAddressLine1', 'sellerAddressLine2', 'sellerAddressLine3', 'sellerTaxType', 'sellerGSTIN', 'sellerPhone', 'bank', 'AccountNo', 'IFSCCODE', 'termsOfDelivery'].forEach(k => {
+                const val = getVal(k);
+                if (val !== undefined && val !== '') invoicePayload.sellerProfile[k] = val;
+            });
+            ['buyerName', 'buyerAddressLine1', 'buyerAddressLine2', 'buyerAddressLine3', 'buyerTaxType', 'buyerGSTIN', 'buyerPhone'].forEach(k => {
+                const val = getVal(k);
+                if (val !== undefined && val !== '') invoicePayload.buyerData[k] = val;
+            });
+
+            try {
+                const jsonPayloadString = JSON.stringify(invoicePayload);
+                const b64Data = btoa(unescape(encodeURIComponent(jsonPayloadString)));
+                docDefinition.info = {
+                    title: `${billType} - ${getVal('invoiceNo') || 'INV'}`,
+                    author: getVal('sellerName') || 'GST Billing Suite',
+                    subject: `GST_INVOICE_DATA:${b64Data}`,
+                    keywords: `GST_INVOICE_B64:${b64Data}`,
+                    creator: 'GST Invoice Generator v2.0',
+                    producer: 'pdfmake'
+                };
+            } catch (e) {
+                console.warn('Could not encode embedded metadata in PDF:', e);
+            }
+
             const cleanType = billType.replace(/[^a-zA-Z0-9]/g, '_');
             const cleanBuyer = (getVal('buyerName') || 'Buyer').replace(/[^a-zA-Z0-9]/g, '_');
             const cleanInv = (getVal('invoiceNo') || 'INV').replace(/[^a-zA-Z0-9]/g, '_');
@@ -3454,6 +3810,366 @@
             }, 3000);
         }
 
+        // ==========================================
+        // PDF IMPORT & PREFILL ENGINE (ROUND-TRIP RESTORATION)
+        // ==========================================
+
+        let pendingImportData = null;
+        let pendingImportFilename = '';
+
+        function triggerPdfUpload() {
+            const input = document.getElementById('pdfFileInput');
+            if (input) input.click();
+        }
+
+        function handlePdfFileSelected(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            // Clear input so selecting the same file again triggers onchange
+            event.target.value = '';
+            processPdfFile(file);
+        }
+
+        // Extract base64 / URL-encoded payload directly from raw ArrayBuffer
+        function extractPayloadFromRawBytes(buffer) {
+            try {
+                const bytes = new Uint8Array(buffer);
+                let binaryStr = '';
+                const chunkSize = 65536;
+                for (let i = 0; i < bytes.length; i += chunkSize) {
+                    binaryStr += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+                }
+
+                // Check for GST_INVOICE_B64: or GST_INVOICE_DATA:
+                const matchB64 = binaryStr.match(/GST_INVOICE_(?:B64|DATA):([A-Za-z0-9+/=]+)/);
+                if (matchB64 && matchB64[1]) {
+                    try {
+                        const rawJson = decodeURIComponent(escape(atob(matchB64[1])));
+                        const data = JSON.parse(rawJson);
+                        if (data && (data.products || data.sellerProfile || data.invoiceMeta)) {
+                            return data;
+                        }
+                    } catch(e) {
+                        console.warn('Direct base64 decode attempt failed:', e);
+                    }
+                }
+
+                // Check for URL-encoded payload
+                const matchPayload = binaryStr.match(/GST_INVOICE_PAYLOAD:([^)\r\n]+)/);
+                if (matchPayload && matchPayload[1]) {
+                    try {
+                        const unescaped = matchPayload[1].replace(/\\([()\\])/g, '$1');
+                        const data = JSON.parse(decodeURIComponent(unescaped));
+                        if (data && (data.products || data.sellerProfile || data.invoiceMeta)) {
+                            return data;
+                        }
+                    } catch(e) {
+                        console.warn('Direct url-encoded decode attempt failed:', e);
+                    }
+                }
+            } catch(err) {
+                console.warn('Raw bytes scan exception:', err);
+            }
+            return null;
+        }
+
+        // Smart text scraper fallback if PDF lacks embedded JSON payload
+        async function parsePdfTextFallback(pdfDoc) {
+            try {
+                let fullText = '';
+                const numPages = pdfDoc.numPages;
+                for (let i = 1; i <= numPages; i++) {
+                    const page = await pdfDoc.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += ' ' + pageText;
+                }
+
+                // Detect bill type
+                let detectedBillType = 'TAX INVOICE';
+                const typeMatches = ['TAX INVOICE', 'ESTIMATE', 'QUOTATION', 'PROFORMA INVOICE', 'BILL OF SUPPLY', 'DELIVERY CHALLAN', 'CASH MEMO'];
+                for (const t of typeMatches) {
+                    if (fullText.toUpperCase().includes(t)) {
+                        detectedBillType = t;
+                        break;
+                    }
+                }
+
+                // Detect Invoice No
+                let detectedInvNo = '';
+                const invMatch = fullText.match(/(?:Invoice\s*No|Ref\s*No|Invoice\s*#|Inv\s*No)[\s:]+([A-Za-z0-9\/-]+)/i);
+                if (invMatch) detectedInvNo = invMatch[1].trim();
+
+                // Detect Invoice Date
+                let detectedDate = '';
+                const dateMatch = fullText.match(/(?:Invoice\s*Date|Date)[\s:]+([0-9]{1,4}[-/.][0-9]{1,2}[-/.][0-9]{1,4}|[0-9]{1,2}\s+[A-Za-z]+\s+[0-9]{2,4})/i);
+                if (dateMatch) {
+                    const parsedDate = new Date(dateMatch[1]);
+                    if (!isNaN(parsedDate.getTime())) {
+                        detectedDate = parsedDate.toISOString().split('T')[0];
+                    }
+                }
+
+                // Detect GSTIN
+                const gstinMatches = fullText.match(/\b([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1})\b/g) || [];
+                const sellerGSTIN = gstinMatches[0] || '';
+                const buyerGSTIN = gstinMatches[1] || '';
+
+                // Detect Bank IFSC and Account
+                let detectedBank = '';
+                let detectedAccount = '';
+                let detectedIFSC = '';
+                const ifscMatch = fullText.match(/IFSC(?:\s*Code)?[\s:]+([A-Z]{4}0[A-Z0-9]{6})/i);
+                if (ifscMatch) detectedIFSC = ifscMatch[1].trim();
+                const accMatch = fullText.match(/A\/c\s*(?:No\.?|Number)?[\s:]+([0-9]{8,18})/i);
+                if (accMatch) detectedAccount = accMatch[1].trim();
+                const bankMatch = fullText.match(/Bank\s*Name[\s:]+([A-Za-z\s]+?)(?=A\/c|IFSC|$)/i);
+                if (bankMatch) detectedBank = bankMatch[1].trim();
+
+                return {
+                    app: 'GST_INVOICE_GENERATOR',
+                    version: '1.0',
+                    isFallbackParsed: true,
+                    sellerProfile: {
+                        sellerName: 'ABC ENTERPRISE',
+                        sellerTaxType: sellerGSTIN ? 'GSTIN' : 'N/A',
+                        sellerGSTIN: sellerGSTIN,
+                        bank: detectedBank || 'HDFC Bank Ltd',
+                        AccountNo: detectedAccount || '50200012345678',
+                        IFSCCODE: detectedIFSC || 'HDFC0000123'
+                    },
+                    buyerData: {
+                        buyerName: 'Buyer Customer',
+                        buyerTaxType: buyerGSTIN ? 'GSTIN' : 'N/A',
+                        buyerGSTIN: buyerGSTIN
+                    },
+                    invoiceMeta: {
+                        billType: detectedBillType,
+                        taxType: sellerGSTIN ? 'GST' : 'N/A',
+                        itemFlavor: (fullText.includes('Sq.ft') || fullText.includes('T.Sq.ft')) ? 'SQFT' : 'STANDARD',
+                        invoiceNo: detectedInvNo || invoiceMeta.invoiceNo,
+                        invoiceDate: detectedDate || invoiceMeta.invoiceDate
+                    },
+                    products: [],
+                    roundOff: 0.00
+                };
+            } catch(err) {
+                console.warn('Fallback text parser error:', err);
+                return null;
+            }
+        }
+
+        async function processPdfFile(file) {
+            if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
+                alert('Please select a valid PDF file (.pdf)');
+                return;
+            }
+
+            pendingImportFilename = file.name;
+            showToast('Analyzing and reading PDF...');
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+
+                // Step 1: Check direct binary scan (works offline & lightning fast)
+                let parsed = extractPayloadFromRawBytes(arrayBuffer);
+
+                // Step 2: Use pdf.js to extract PDF metadata if direct scan didn't capture it
+                if (!parsed && window.pdfjsLib) {
+                    try {
+                        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                        const pdfDoc = await loadingTask.promise;
+                        const metadata = await pdfDoc.getMetadata().catch(() => null);
+
+                        if (metadata && metadata.info) {
+                            const kw = metadata.info.Keywords || metadata.info.keywords || metadata.info.Subject || metadata.info.subject || '';
+                            const matchB64 = kw.match(/GST_INVOICE_(?:B64|DATA):([A-Za-z0-9+/=]+)/);
+                            if (matchB64 && matchB64[1]) {
+                                const rawJson = decodeURIComponent(escape(atob(matchB64[1])));
+                                parsed = JSON.parse(rawJson);
+                            }
+                        }
+
+                        // Step 3: Fallback text scraper if metadata is absent
+                        if (!parsed) {
+                            parsed = await parsePdfTextFallback(pdfDoc);
+                        }
+                    } catch(pdfJsErr) {
+                        console.warn('pdf.js execution note:', pdfJsErr);
+                    }
+                }
+
+                if (!parsed) {
+                    alert('Could not detect invoice data in this PDF.\n\nPlease upload a PDF document generated with this GST Invoice application.');
+                    return;
+                }
+
+                pendingImportData = parsed;
+                showPdfImportModal(parsed, file.name);
+
+            } catch (err) {
+                console.error('Error processing PDF file:', err);
+                alert('Failed to read PDF file: ' + err.message);
+            }
+        }
+
+        function showPdfImportModal(data, filename) {
+            const modal = document.getElementById('pdfImportModal');
+            if (!modal) return;
+
+            const docType = (data.invoiceMeta && data.invoiceMeta.billType) || 'TAX INVOICE';
+            const invNo = (data.invoiceMeta && data.invoiceMeta.invoiceNo) || 'INV';
+            const invDate = (data.invoiceMeta && data.invoiceMeta.invoiceDate) || '-';
+            const sellerName = (data.sellerProfile && data.sellerProfile.sellerName) || 'Seller';
+            const buyerName = (data.buyerData && data.buyerData.buyerName) || 'Buyer';
+            const productsList = data.products || [];
+            const flavor = (data.invoiceMeta && data.invoiceMeta.itemFlavor) || 'STANDARD';
+            const flavorLabel = (flavor === 'SQFT') ? 'Square Feet (Sq.Ft.)' : 'Standard Items';
+            const taxType = (data.invoiceMeta && data.invoiceMeta.taxType) || 'GST';
+
+            // Calculate total from products
+            let grandTotal = 0;
+            productsList.forEach(p => { grandTotal += (p.total || 0); });
+            if (data.roundOff) grandTotal += Number(data.roundOff);
+
+            // Populate Modal UI
+            document.getElementById('modalFileName').innerText = filename;
+            document.getElementById('modalDocType').innerText = docType;
+            document.getElementById('modalDocType').className = `doc-summary-badge ${docType.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+            document.getElementById('modalInvNo').innerText = invNo;
+            document.getElementById('modalInvDate').innerText = invDate;
+            document.getElementById('modalSellerName').innerText = sellerName;
+            document.getElementById('modalBuyerName').innerText = buyerName;
+            document.getElementById('modalItemsCount').innerText = `${productsList.length} (${flavorLabel})`;
+            document.getElementById('modalTaxType').innerText = taxType === 'N/A' ? 'Non-GST / Exempt' : (taxType === 'IGST' ? 'Integrated GST (IGST)' : 'GST (CGST + SGST)');
+            document.getElementById('modalGrandTotal').innerText = formatCurrency(grandTotal);
+
+            // Invoice number radio labels
+            const nextInvNo = incrementInvoiceNumber(invNo);
+            const keepInvLabel = document.getElementById('modalKeepInvLabel');
+            const nextInvLabel = document.getElementById('modalNextInvLabel');
+            if (keepInvLabel) keepInvLabel.innerText = `Keep original (${invNo}) — for updating this bill`;
+            if (nextInvLabel) nextInvLabel.innerText = `Advance to next (#${nextInvNo}) — for creating next bill`;
+
+            // Reset selection to default (full import, keep invoice #)
+            const radioFull = document.getElementById('importTypeFull');
+            if (radioFull) radioFull.checked = true;
+            const radioKeepInv = document.getElementById('importInvKeep');
+            if (radioKeepInv) radioKeepInv.checked = true;
+
+            modal.style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        function closePdfImportModal() {
+            const modal = document.getElementById('pdfImportModal');
+            if (modal) modal.style.display = 'none';
+            pendingImportData = null;
+        }
+
+        function applyPdfImport() {
+            if (!pendingImportData) return;
+
+            const data = pendingImportData;
+            const isFullImport = document.getElementById('importTypeFull') ? document.getElementById('importTypeFull').checked : true;
+            const keepInvNo = document.getElementById('importInvKeep') ? document.getElementById('importInvKeep').checked : true;
+
+            // 1. Seller Profile
+            if (isFullImport && data.sellerProfile) {
+                sellerProfile = Object.assign({}, sellerProfile, data.sellerProfile);
+                try {
+                    localStorage.setItem(SELLER_STORAGE_KEY, JSON.stringify(sellerProfile));
+                    sessionStorage.setItem(SELLER_STORAGE_KEY, JSON.stringify(sellerProfile));
+                } catch(e) {}
+            }
+
+            // 2. Buyer Data
+            if (data.buyerData) {
+                buyerData = Object.assign({}, buyerData, data.buyerData);
+            }
+
+            // 3. Invoice Meta
+            if (data.invoiceMeta) {
+                invoiceMeta = Object.assign({}, invoiceMeta, data.invoiceMeta);
+                
+                // Invoice number handling
+                if (!keepInvNo) {
+                    const currentInv = data.invoiceMeta.invoiceNo || invoiceMeta.invoiceNo;
+                    const nextInv = incrementInvoiceNumber(currentInv);
+                    invoiceMeta.invoiceNo = nextInv;
+                }
+                localStorage.setItem(INVOICE_NO_STORAGE_KEY, invoiceMeta.invoiceNo);
+            }
+
+            // 4. Item Flavor & Tax Type
+            const importedFlavor = (data.invoiceMeta && data.invoiceMeta.itemFlavor) || 'STANDARD';
+            switchItemFlavor(importedFlavor);
+
+            const importedTaxType = (data.invoiceMeta && data.invoiceMeta.taxType) || 'GST';
+            switchInvoiceTaxType(importedTaxType);
+
+            // 5. Products Array
+            if (data.products && Array.isArray(data.products)) {
+                products = JSON.parse(JSON.stringify(data.products));
+            } else {
+                products = [];
+            }
+
+            // 6. Round Off
+            roundOff = (typeof data.roundOff === 'number') ? data.roundOff : 0.00;
+
+            // 7. Synchronize UI & Preview
+            populateFormFields();
+            renderProducts();
+            updateTotals();
+            updateInvoicePreview();
+
+            closePdfImportModal();
+
+            // Switch to products or preview tab
+            if (products.length > 0) {
+                switchTab('tab-items');
+            } else {
+                switchTab('tab-seller');
+            }
+
+            showToast(`Prefilled from ${pendingImportFilename || 'PDF'}! You can now update and re-generate.`);
+        }
+
+        // Global Drag & Drop Handler for PDFs
+        let dragCounter = 0;
+        window.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            dragCounter++;
+            const overlay = document.getElementById('dragDropOverlay');
+            if (overlay) overlay.style.display = 'flex';
+        });
+
+        window.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        window.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragCounter--;
+            if (dragCounter <= 0) {
+                dragCounter = 0;
+                const overlay = document.getElementById('dragDropOverlay');
+                if (overlay) overlay.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragCounter = 0;
+            const overlay = document.getElementById('dragDropOverlay');
+            if (overlay) overlay.style.display = 'none';
+
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                processPdfFile(e.dataTransfer.files[0]);
+            }
+        });
+
         // Service Worker Offline Caching Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -3475,5 +4191,129 @@
             showToast('Offline Mode Active: Full invoice generator available!');
         });
     </script>
+
+    <!-- PDF Review & Import Modal Dialog -->
+    <div id="pdfImportModal" class="pdf-modal-backdrop" style="display: none;" onclick="if(event.target === this) closePdfImportModal()">
+        <div class="pdf-modal-dialog">
+            <div class="pdf-modal-header">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <div style="width: 34px; height: 34px; border-radius: 8px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="file-spreadsheet" style="width: 18px; height: 18px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin: 0;">Prefill from PDF</h3>
+                        <p id="modalFileName" style="font-size: 0.76rem; color: var(--text-muted); margin: 0; word-break: break-all;">invoice.pdf</p>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closePdfImportModal()" style="border-radius: var(--radius-pill); padding: 0.35rem 0.65rem;">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+
+            <div class="pdf-modal-body">
+                <!-- Summary Header Badge -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+                    <span id="modalDocType" class="doc-summary-badge tax-invoice">TAX INVOICE</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">GST Document Detected</span>
+                </div>
+
+                <!-- Parsed Info Grid -->
+                <div class="pdf-parsed-grid">
+                    <div class="pdf-parsed-item">
+                        <span class="label">Invoice / Ref No</span>
+                        <span class="value" id="modalInvNo">GST/2026/001</span>
+                    </div>
+                    <div class="pdf-parsed-item">
+                        <span class="label">Invoice Date</span>
+                        <span class="value" id="modalInvDate">2026-09-28</span>
+                    </div>
+                    <div class="pdf-parsed-item">
+                        <span class="label">Seller Company</span>
+                        <span class="value" id="modalSellerName">ABC ENTERPRISE</span>
+                    </div>
+                    <div class="pdf-parsed-item">
+                        <span class="label">Billed To (Buyer)</span>
+                        <span class="value" id="modalBuyerName">BIRD INK</span>
+                    </div>
+                    <div class="pdf-parsed-item">
+                        <span class="label">Line Items</span>
+                        <span class="value" id="modalItemsCount">3 (Standard)</span>
+                    </div>
+                    <div class="pdf-parsed-item">
+                        <span class="label">Tax Mode</span>
+                        <span class="value" id="modalTaxType">GST (CGST + SGST)</span>
+                    </div>
+                </div>
+
+                <!-- Grand Total Highlight -->
+                <div style="background: linear-gradient(135deg, #0071e3 0%, #0056b3 100%); color: white; padding: 0.85rem 1.15rem; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 0.72rem; opacity: 0.85; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Document Total</div>
+                        <div style="font-size: 0.8rem; opacity: 0.95;">All line items & taxes included</div>
+                    </div>
+                    <div id="modalGrandTotal" style="font-size: 1.35rem; font-weight: 800; font-family: 'JetBrains Mono', monospace;">₹ 0.00</div>
+                </div>
+
+                <!-- Import Scope Options -->
+                <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                    <label class="form-label" style="margin-bottom: 0.15rem; font-weight: 700;">Select What to Prefill:</label>
+                    <label class="import-option-box" for="importTypeFull">
+                        <input type="radio" id="importTypeFull" name="pdfImportScope" value="full" checked>
+                        <div class="import-option-box-text">
+                            <h4>Prefill Entire Document (Recommended)</h4>
+                            <p>Updates Seller & Bank details, Buyer, Line Items, Rates, Dimensions & Settings.</p>
+                        </div>
+                    </label>
+                    <label class="import-option-box" for="importTypeItemsOnly">
+                        <input type="radio" id="importTypeItemsOnly" name="pdfImportScope" value="items_only">
+                        <div class="import-option-box-text">
+                            <h4>Buyer & Line Items Only</h4>
+                            <p>Preserves your currently saved Seller company profile, and updates Buyer + Products.</p>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Invoice Number Behavior -->
+                <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                    <label class="form-label" style="margin-bottom: 0.15rem; font-weight: 700;">Invoice / Reference Number:</label>
+                    <label class="import-option-box" for="importInvKeep">
+                        <input type="radio" id="importInvKeep" name="pdfImportInvNo" value="keep" checked>
+                        <div class="import-option-box-text">
+                            <h4 id="modalKeepInvLabel">Keep Original (#GST/2026/001)</h4>
+                            <p>Ideal if you are correcting, modifying or updating this exact bill.</p>
+                        </div>
+                    </label>
+                    <label class="import-option-box" for="importInvNext">
+                        <input type="radio" id="importInvNext" name="pdfImportInvNo" value="next">
+                        <div class="import-option-box-text">
+                            <h4 id="modalNextInvLabel">Auto-Increment for Next Bill</h4>
+                            <p>Use previous products as a template and assign the next sequential invoice number.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="pdf-modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closePdfImportModal()">
+                    <span>Cancel</span>
+                </button>
+                <button type="button" class="btn btn-primary" onclick="applyPdfImport()" style="gap: 0.45rem;">
+                    <i data-lucide="check-circle-2" style="width: 17px; height: 17px;"></i>
+                    <span>Apply & Edit Form</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drag and Drop Fullscreen Overlay -->
+    <div id="dragDropOverlay" class="drag-overlay" style="display: none;">
+        <div class="drag-overlay-box">
+            <div style="width: 68px; height: 68px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="file-up" style="width: 36px; height: 36px;"></i>
+            </div>
+            <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0;">Drop Invoice PDF Here</h2>
+            <p style="font-size: 0.95rem; opacity: 0.9; margin: 0; max-width: 360px;">Release the PDF file to automatically parse line items, buyer info, and prefill the form.</p>
+        </div>
+    </div>
 </body>
 </html>

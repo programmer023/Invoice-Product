@@ -39,10 +39,11 @@ This project turns `index.html` into a complete invoice studio with:
 - Instant tax and subtotal calculation
 - Customer-friendly table / card display of invoice entries
 
-### 4. Preview & Export
+### 4. Preview, PDF Export & Round-Trip Prefill
 - See the invoice update in real time in a document-style preview pane
 - Review totals, tax split, amount in words, and footer details
 - Export the final invoice to PDF directly from the browser
+- **Prefill & Update from Existing PDF**: Upload or drag-and-drop any previously generated PDF to automatically restore the entire invoice, line items, buyer info, and settings with exact precision for quick edits and re-exports!
 
 ## How to use
 
