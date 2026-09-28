@@ -368,6 +368,13 @@
             border-bottom: none;
         }
 
+        .invoice-table tr.is-editing-row {
+            background-color: #eff6ff !important;
+        }
+        .invoice-table tr.is-editing-row td {
+            border-bottom-color: #bfdbfe;
+        }
+
         /* Mobile Item Cards */
         .mobile-items-list {
             display: flex;
@@ -381,6 +388,12 @@
             border-radius: var(--radius-md);
             padding: 0.9rem;
             position: relative;
+        }
+
+        .mobile-item-card.is-editing-card {
+            border-color: var(--primary) !important;
+            background-color: #eff6ff !important;
+            box-shadow: 0 0 0 1px var(--primary);
         }
 
         .mobile-card-header {
@@ -901,18 +914,24 @@
                             </div>
                         </div>
 
-                        <div class="card-header">
+                        <div class="card-header" id="itemFormHeader">
                             <div>
-                                <h2 class="card-title">
-                                    <i data-lucide="package-plus" style="width: 18px; height: 18px;"></i>
-                                    Add New Line Item
+                                <h2 class="card-title" id="itemFormTitle">
+                                    <i data-lucide="package-plus" id="itemFormIcon" style="width: 18px; height: 18px;"></i>
+                                    <span id="itemFormTitleText">Add New Line Item</span>
                                 </h2>
-                                <p class="card-subtitle">Enter product description, dimensions, quantity, rate, and tax.</p>
+                                <p class="card-subtitle" id="itemFormSubtitle">Enter product description, dimensions, quantity, rate, and tax.</p>
                             </div>
-                            <button type="button" class="btn btn-primary btn-sm" onclick="addNewProductFromForm()">
-                                <i data-lucide="plus-circle" style="width: 15px; height: 15px;"></i>
-                                <span>Add to Invoice</span>
-                            </button>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-secondary btn-sm" id="cancelEditBtn" onclick="cancelEditProduct()" style="display: none;">
+                                    <i data-lucide="x" style="width: 15px; height: 15px;"></i>
+                                    <span>Cancel Edit</span>
+                                </button>
+                                <button type="button" class="btn btn-primary btn-sm" id="itemFormSubmitBtn" onclick="addNewProductFromForm()">
+                                    <i data-lucide="plus-circle" id="itemFormSubmitIcon" style="width: 15px; height: 15px;"></i>
+                                    <span id="itemFormSubmitText">Add to Invoice</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="form-grid cols-4" id="itemFormGrid">
@@ -1305,6 +1324,7 @@
         };
 
         let products = [];
+        let editingProductIndex = -1;
 
         let roundOff = 0.00;
 
@@ -1625,6 +1645,7 @@
             // Clear already added line items if switching format
             if (products.length > 0 && previousFlavor && previousFlavor !== invoiceMeta.itemFlavor) {
                 products = [];
+                resetProductForm();
                 showToast(`Switched to ${isSqft ? 'Sq.Ft.' : 'Standard'} format. Previous items cleared.`);
             }
 
@@ -1804,8 +1825,10 @@
             const taxAmount = rateQuantity * (taxPer / 100);
             const total = rateQuantity + taxAmount;
 
-            const newItem = {
-                no: products.length + 1,
+            const isEditing = (editingProductIndex >= 0 && editingProductIndex < products.length);
+
+            const itemData = {
+                no: isEditing ? (editingProductIndex + 1) : (products.length + 1),
                 name: name,
                 hsncode: hsn,
                 quantity: qty,
@@ -1823,25 +1846,106 @@
                 total: total
             };
 
-            products.push(newItem);
-            saveProductToCatalog(newItem);
+            if (isEditing) {
+                products[editingProductIndex] = itemData;
+                showToast(`Line item #${itemData.no} updated!`);
+            } else {
+                products.push(itemData);
+                showToast('Item added to invoice!');
+            }
+
+            saveProductToCatalog(itemData);
+            resetProductForm();
             renderProducts();
             updateTotals();
             updateInvoicePreview();
+        }
 
-            // Reset form
+        function editProduct(index) {
+            if (index < 0 || index >= products.length) return;
+            const item = products[index];
+            editingProductIndex = index;
+
+            // Populate form fields
+            document.getElementById('newProdName').value = item.name || '';
+            document.getElementById('newProdHSN').value = item.hsncode || '';
+            document.getElementById('newProdQty').value = item.quantity !== undefined ? item.quantity : 1;
+            if (document.getElementById('newProdLength')) {
+                document.getElementById('newProdLength').value = (item.length !== undefined && item.length !== 0) ? item.length : 10;
+            }
+            if (document.getElementById('newProdBreadth')) {
+                document.getElementById('newProdBreadth').value = (item.breadth !== undefined && item.breadth !== 0) ? item.breadth : 20;
+            }
+            document.getElementById('newProdRate').value = item.rate !== undefined ? item.rate : 0;
+
+            if (item.taxType === 'IGST') {
+                if (document.getElementById('newProdIGST')) document.getElementById('newProdIGST').value = item.igstPer !== undefined ? item.igstPer : 18;
+            } else {
+                if (document.getElementById('newProdCGST')) document.getElementById('newProdCGST').value = item.cgstPer !== undefined ? item.cgstPer : 9;
+                if (document.getElementById('newProdSGST')) document.getElementById('newProdSGST').value = item.sgstPer !== undefined ? item.sgstPer : 9;
+            }
+
+            // Update Form Header & Action Buttons
+            const titleEl = document.getElementById('itemFormTitleText');
+            const subtitleEl = document.getElementById('itemFormSubtitle');
+            const submitTextEl = document.getElementById('itemFormSubmitText');
+            const cancelBtn = document.getElementById('cancelEditBtn');
+
+            if (titleEl) titleEl.innerText = `Edit Line Item (#${item.no})`;
+            if (subtitleEl) subtitleEl.innerText = 'Modify product details and click "Update Item" to save.';
+            if (submitTextEl) submitTextEl.innerText = 'Update Item';
+            if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+
+            calculateNewProdPreview();
+            renderProducts();
+
+            const formHeader = document.getElementById('itemFormHeader');
+            if (formHeader) {
+                formHeader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            document.getElementById('newProdName').focus();
+            showToast(`Editing item #${item.no}: ${item.name}`);
+        }
+
+        function cancelEditProduct() {
+            resetProductForm();
+            renderProducts();
+            showToast('Editing cancelled');
+        }
+
+        function resetProductForm() {
+            editingProductIndex = -1;
+
             document.getElementById('newProdName').value = '';
             document.getElementById('newProdHSN').value = '';
             document.getElementById('newProdQty').value = '1';
             if (document.getElementById('newProdLength')) document.getElementById('newProdLength').value = '10';
             if (document.getElementById('newProdBreadth')) document.getElementById('newProdBreadth').value = '20';
             document.getElementById('newProdRate').value = '1000';
-            calculateNewProdPreview();
+            if (document.getElementById('newProdCGST')) document.getElementById('newProdCGST').value = '9';
+            if (document.getElementById('newProdSGST')) document.getElementById('newProdSGST').value = '9';
+            if (document.getElementById('newProdIGST')) document.getElementById('newProdIGST').value = '18';
 
-            showToast('Item added to invoice!');
+            const titleEl = document.getElementById('itemFormTitleText');
+            const subtitleEl = document.getElementById('itemFormSubtitle');
+            const submitTextEl = document.getElementById('itemFormSubmitText');
+            const cancelBtn = document.getElementById('cancelEditBtn');
+
+            if (titleEl) titleEl.innerText = 'Add New Line Item';
+            if (subtitleEl) subtitleEl.innerText = 'Enter product description, dimensions, quantity, rate, and tax.';
+            if (submitTextEl) submitTextEl.innerText = 'Add to Invoice';
+            if (cancelBtn) cancelBtn.style.display = 'none';
+
+            calculateNewProdPreview();
+            lucide.createIcons();
         }
 
         function removeProduct(index) {
+            if (editingProductIndex === index) {
+                resetProductForm();
+            } else if (editingProductIndex > index) {
+                editingProductIndex--;
+            }
             products.splice(index, 1);
             // Re-index
             products.forEach((p, idx) => p.no = idx + 1);
@@ -1864,6 +1968,7 @@
         function clearAllProducts() {
             if (products.length === 0) return;
             if (confirm('Are you sure you want to clear all line items?')) {
+                resetProductForm();
                 products = [];
                 renderProducts();
                 updateTotals();
@@ -1901,7 +2006,7 @@
                             <th style="width: 90px;">Rate</th>
                             <th style="width: 90px;">Tax</th>
                             <th style="width: 110px;">Total (₹)</th>
-                            <th style="width: 80px; text-align: right;">Action</th>
+                            <th style="width: 110px; text-align: right;">Action</th>
                         </tr>
                     `;
                 } else {
@@ -1915,7 +2020,7 @@
                             <th style="width: 100px;">Basic</th>
                             <th style="width: 100px;">Tax</th>
                             <th style="width: 110px;">Total (₹)</th>
-                            <th style="width: 80px; text-align: right;">Action</th>
+                            <th style="width: 110px; text-align: right;">Action</th>
                         </tr>
                     `;
                 }
@@ -1940,9 +2045,12 @@
                         ? `IGST (${item.igstPer}%)` 
                         : `C:${item.cgstPer}% S:${item.sgstPer}%`);
 
+                const isEditingThis = (editingProductIndex === idx);
+                const rowClassAttr = isEditingThis ? 'class="is-editing-row"' : '';
+
                 if (isSqft) {
                     return `
-                        <tr>
+                        <tr ${rowClassAttr}>
                             <td class="input-mono">${item.no}</td>
                             <td><strong>${escapeHtml(item.name)}</strong></td>
                             <td class="input-mono">${escapeHtml(item.hsncode || '-')}</td>
@@ -1956,6 +2064,9 @@
                             </td>
                             <td style="text-align: right;">
                                 <div style="display: inline-flex; gap: 0.35rem;">
+                                    <button class="btn btn-secondary btn-icon-only btn-sm" onclick="editProduct(${idx})" title="Edit Item">
+                                        <i data-lucide="edit" style="width: 14px; height: 14px; color: var(--primary);"></i>
+                                    </button>
                                     <button class="btn btn-secondary btn-icon-only btn-sm" onclick="duplicateProduct(${idx})" title="Duplicate">
                                         <i data-lucide="copy" style="width: 14px; height: 14px;"></i>
                                     </button>
@@ -1968,7 +2079,7 @@
                     `;
                 } else {
                     return `
-                        <tr>
+                        <tr ${rowClassAttr}>
                             <td class="input-mono">${item.no}</td>
                             <td><strong>${escapeHtml(item.name)}</strong></td>
                             <td class="input-mono">${escapeHtml(item.hsncode || '-')}</td>
@@ -1981,6 +2092,9 @@
                             </td>
                             <td style="text-align: right;">
                                 <div style="display: inline-flex; gap: 0.35rem;">
+                                    <button class="btn btn-secondary btn-icon-only btn-sm" onclick="editProduct(${idx})" title="Edit Item">
+                                        <i data-lucide="edit" style="width: 14px; height: 14px; color: var(--primary);"></i>
+                                    </button>
                                     <button class="btn btn-secondary btn-icon-only btn-sm" onclick="duplicateProduct(${idx})" title="Duplicate">
                                         <i data-lucide="copy" style="width: 14px; height: 14px;"></i>
                                     </button>
@@ -2000,15 +2114,21 @@
                     ? 'N/A' 
                     : `${item.taxType === 'IGST' ? `IGST ${item.igstPer}%` : `GST ${item.cgstPer * 2}%`} (${formatCurrency(item.taxAmount)})`;
 
+                const isEditingThis = (editingProductIndex === idx);
+                const cardClass = isEditingThis ? 'mobile-item-card is-editing-card' : 'mobile-item-card';
+
                 return `
-                    <div class="mobile-item-card">
+                    <div class="${cardClass}">
                         <div class="mobile-card-header">
                             <span class="item-badge">#${item.no}</span>
                             <div style="display: flex; gap: 0.35rem;">
-                                <button class="btn btn-secondary btn-sm" onclick="duplicateProduct(${idx})">
+                                <button class="btn btn-secondary btn-sm" onclick="editProduct(${idx})" title="Edit Item">
+                                    <i data-lucide="edit" style="width: 14px; height: 14px; color: var(--primary);"></i>
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="duplicateProduct(${idx})" title="Duplicate">
                                     <i data-lucide="copy" style="width: 14px; height: 14px;"></i>
                                 </button>
-                                <button class="btn btn-danger btn-sm" onclick="removeProduct(${idx})">
+                                <button class="btn btn-danger btn-sm" onclick="removeProduct(${idx})" title="Remove">
                                     <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                                 </button>
                             </div>
