@@ -1,0 +1,18 @@
+{
+  "name": "Dynamic GST Invoice Generator",
+  "short_name": "GST Invoice",
+  "description": "Offline-capable GST tax invoice and bill generator with PDF export.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f5f7",
+  "theme_color": "#0071e3",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%230071e3'/%3E%3Cpath d='M160 144h192v224H160z' fill='none' stroke='white' stroke-width='28' stroke-linejoin='round'/%3E%3Cpath d='M208 208h96M208 256h96M208 304h64' stroke='white' stroke-width='24' stroke-linecap='round'/%3E%3C/svg%3E",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
