@@ -42,6 +42,14 @@
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
         }
 
+        html, body {
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -57,34 +65,47 @@
             min-height: 100vh;
         }
 
-        /* Container Layout (Maximized Screen Height) */
+        /* Container Layout (Full width with fluid padding) */
         .app-container {
-            max-width: 1440px;
-            margin: 0.5rem auto;
-            padding: 0 0.75rem;
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0.75rem 1.25rem;
+            box-sizing: border-box;
         }
 
         @media (max-width: 768px) {
-            body {
-                padding-top: 0.25rem;
-            }
             .app-container {
-                margin: 0.25rem auto;
-                padding: 0 0.5rem;
+                padding: 0.4rem 0.5rem;
             }
         }
 
         .main-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 1.5rem;
+            gap: 1.25rem;
+            width: 100%;
+            min-width: 0;
         }
 
         @media (min-width: 1024px) {
             .main-grid {
-                grid-template-columns: 1.1fr 0.9fr;
+                grid-template-columns: 1.05fr 0.95fr;
                 align-items: start;
+                gap: 1.5rem;
             }
+        }
+
+        @media (min-width: 1600px) {
+            .main-grid {
+                grid-template-columns: 1.1fr 0.9fr;
+                gap: 2rem;
+            }
+        }
+
+        .form-pane, .preview-pane {
+            min-width: 0;
+            width: 100%;
         }
 
         /* Tabs / Navigation Pills */
@@ -97,12 +118,31 @@
             border: 1px solid var(--border);
             margin-bottom: 1rem;
             overflow-x: auto;
-            scrollbar-width: none;
+            width: 100%;
+            box-sizing: border-box;
+            scrollbar-width: thin;
         }
-        .step-tabs::-webkit-scrollbar { display: none; }
 
-        /* Fixed / Sticky Navigation on Top for Desktop/Laptop Only */
-        @media (min-width: 769px) {
+        @media (max-width: 640px) {
+            .step-tabs {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.35rem;
+                padding: 0.35rem;
+                overflow-x: visible;
+            }
+            .tab-btn {
+                min-width: 0 !important;
+                padding: 0.55rem 0.35rem !important;
+                font-size: 0.76rem !important;
+                justify-content: center !important;
+                white-space: normal !important;
+                text-align: center !important;
+                gap: 0.35rem !important;
+            }
+        }
+
+        @media (min-width: 641px) {
             .step-tabs {
                 position: sticky;
                 top: 0.4rem;
@@ -150,9 +190,12 @@
             border-radius: var(--radius-lg);
             border: 1px solid var(--border);
             box-shadow: var(--shadow-sm);
-            padding: 1.25rem;
+            padding: clamp(0.9rem, 2vw, 1.35rem);
             margin-bottom: 1.25rem;
             transition: box-shadow 0.2s ease;
+            width: 100%;
+            box-sizing: border-box;
+            min-width: 0;
         }
 
         .card:hover {
@@ -163,9 +206,34 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
             margin-bottom: 1.1rem;
             padding-bottom: 0.75rem;
             border-bottom: 1px solid var(--border);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .card-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 640px) {
+            .card-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .card-header-actions {
+                width: 100%;
+            }
+            .card-header-actions .btn {
+                flex: 1 1 auto;
+                justify-content: center;
+            }
         }
 
         .card-title {
@@ -175,39 +243,60 @@
             font-size: 1rem;
             font-weight: 700;
             color: var(--secondary);
+            flex-wrap: wrap;
         }
 
         .card-title i {
             color: var(--primary);
+            flex-shrink: 0;
         }
 
         .card-subtitle {
             font-size: 0.8rem;
             color: var(--text-muted);
             font-weight: 400;
+            margin-top: 0.15rem;
         }
 
         /* Form Inputs & Grid */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 0.9rem;
+            gap: 0.85rem;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        @media (min-width: 640px) {
-            .form-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
-            .form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-            .form-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+        @media (min-width: 600px) {
+            .form-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .form-grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .form-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (min-width: 900px) {
+            .form-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .form-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
             gap: 0.35rem;
+            min-width: 0;
         }
 
         .form-group.full-width {
             grid-column: 1 / -1;
+        }
+
+        .form-group.span-2 {
+            grid-column: 1 / -1;
+        }
+
+        @media (min-width: 900px) {
+            .form-group.span-2 {
+                grid-column: span 2;
+            }
         }
 
         .form-label {
@@ -217,6 +306,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.25rem;
         }
 
         .form-label .required {
@@ -464,10 +555,87 @@
             background: rgba(239, 68, 68, 0.15);
         }
 
+        /* Top Invoice Configuration Bar */
+        .config-bar-compact {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.65rem;
+            margin-bottom: 0.85rem;
+            padding: 0.65rem;
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            border-radius: var(--radius-md);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 640px) {
+            .config-bar-compact {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 0.5rem;
+                padding: 0.45rem 0.65rem;
+            }
+        }
+
+        .item-preview-box {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: var(--surface-subtle);
+            border-radius: var(--radius-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 480px) {
+            .item-preview-box {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+        }
+
+        /* Step Bottom Navigation Actions */
+        .step-actions {
+            margin-top: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 640px) {
+            .step-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .step-actions .btn {
+                width: 100%;
+                justify-content: center;
+                padding: 0.7rem 1rem;
+            }
+        }
+
         /* Live Preview Document Area (A4 Proportion & Bottom Footer Alignment) */
         .preview-pane {
-            position: sticky;
-            top: 5rem;
+            min-width: 0;
+            width: 100%;
+        }
+
+        @media (min-width: 1024px) {
+            .preview-pane {
+                position: sticky;
+                top: 4.5rem;
+            }
         }
 
         .preview-document {
@@ -475,24 +643,34 @@
             border: 1px solid #cbd5e1;
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
-            padding: 1.5rem;
+            padding: clamp(0.85rem, 2vw, 1.5rem);
             font-size: 0.8rem;
             color: #1e293b;
-            min-height: 840px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: auto;
+        }
+
+        @media (min-width: 1024px) {
+            .preview-document {
+                min-height: 840px;
+            }
         }
 
         .doc-body-top {
             display: flex;
             flex-direction: column;
             flex-grow: 1;
+            min-width: 0;
         }
 
         .doc-body-bottom {
             margin-top: auto;
             padding-top: 0.5rem;
+            min-width: 0;
         }
 
         .doc-header {
@@ -511,17 +689,32 @@
 
         .doc-grid-2 {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             border: 1px solid #94a3b8;
             margin-bottom: 0.75rem;
         }
 
-        .doc-box {
-            padding: 0.6rem;
+        @media (min-width: 480px) {
+            .doc-grid-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+            .doc-grid-2 .doc-box:first-child {
+                border-right: 1px solid #94a3b8;
+                border-bottom: none;
+            }
         }
 
-        .doc-box:first-child {
-            border-right: 1px solid #94a3b8;
+        @media (max-width: 479px) {
+            .doc-grid-2 .doc-box:first-child {
+                border-bottom: 1px solid #94a3b8;
+                border-right: none;
+            }
+        }
+
+        .doc-box {
+            padding: 0.6rem;
+            min-width: 0;
+            word-break: break-word;
         }
 
         .doc-meta-row {
@@ -529,6 +722,7 @@
             justify-content: space-between;
             padding: 0.25rem 0;
             border-bottom: 1px dotted #e2e8f0;
+            gap: 0.5rem;
         }
 
         .doc-meta-row:last-child {
@@ -560,6 +754,7 @@
             border: 1px solid #94a3b8;
             padding: 0.6rem;
             background: #f8fafc;
+            box-sizing: border-box;
         }
 
         .doc-words {
@@ -568,17 +763,34 @@
             margin-top: 0.5rem;
             font-size: 0.75rem;
             background: #ffffff;
+            box-sizing: border-box;
+            word-break: break-word;
         }
 
         .doc-footer {
             display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
+            grid-template-columns: 1fr;
             border: 1px solid #94a3b8;
             margin-top: 0.5rem;
             min-height: 95px;
         }
 
+        @media (min-width: 480px) {
+            .doc-footer {
+                grid-template-columns: 1.2fr 0.8fr;
+            }
+            .doc-footer .doc-box:first-child {
+                border-right: 1px solid #94a3b8;
+                border-bottom: none;
+            }
+        }
 
+        @media (max-width: 479px) {
+            .doc-footer .doc-box:first-child {
+                border-bottom: 1px solid #94a3b8;
+                border-right: none;
+            }
+        }
 
         /* Toast Notifications */
         .toast-container {
@@ -590,6 +802,7 @@
             flex-direction: column;
             gap: 0.5rem;
             pointer-events: none;
+            max-width: calc(100vw - 2.5rem);
         }
 
         .toast {
@@ -605,6 +818,7 @@
             gap: 0.5rem;
             animation: slideIn 0.3s ease forwards;
             pointer-events: auto;
+            word-break: break-word;
         }
 
         @keyframes slideIn {
@@ -618,6 +832,7 @@
             flex-wrap: wrap;
             gap: 0.5rem;
             margin-top: 0.75rem;
+            width: 100%;
         }
     </style>
 </head>
@@ -725,7 +940,7 @@
                             </div>
                         </div>
 
-                        <div class="profile-actions" style="margin-top: 1.25rem; display: flex; justify-content: flex-end; align-items: center;">
+                        <div class="step-actions" style="justify-content: flex-end;">
                             <button class="btn btn-primary" onclick="switchTab('tab-buyer')">
                                 <span>Next: Buyer Details</span>
                                 <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
@@ -853,7 +1068,7 @@
                             </div>
                         </div>
 
-                        <div style="margin-top: 1.25rem; display: flex; justify-content: space-between;">
+                        <div class="step-actions">
                             <button class="btn btn-secondary" onclick="switchTab('tab-seller')">
                                 <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
                                 <span>Previous</span>
@@ -870,7 +1085,7 @@
                 <section id="tab-items" class="tab-content" style="display: none;">
                     <div class="card">
                         <!-- Top Invoice Configuration Controls: 3 Dropdowns in a Single Compact Line -->
-                        <div class="config-bar-compact" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 0.85rem; padding: 0.45rem 0.65rem; background: var(--primary-light); border: 1px solid var(--primary-border); border-radius: var(--radius-md);">
+                        <div class="config-bar-compact">
                             <!-- Document / Bill Type Selector -->
                             <div style="display: flex; flex-direction: column; gap: 0.2rem; min-width: 0;">
                                 <div style="display: flex; align-items: center; gap: 0.35rem;">
@@ -922,7 +1137,7 @@
                                 </h2>
                                 <p class="card-subtitle" id="itemFormSubtitle">Enter product description, dimensions, quantity, rate, and tax.</p>
                             </div>
-                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <div class="card-header-actions">
                                 <button type="button" class="btn btn-secondary btn-sm" id="cancelEditBtn" onclick="cancelEditProduct()" style="display: none;">
                                     <i data-lucide="x" style="width: 15px; height: 15px;"></i>
                                     <span>Cancel Edit</span>
@@ -935,7 +1150,7 @@
                         </div>
 
                         <div class="form-grid cols-4" id="itemFormGrid">
-                            <div class="form-group full-width" style="grid-column: span 2;">
+                            <div class="form-group span-2">
                                 <label class="form-label">
                                     <span>Description of Goods / Services <span class="required">*</span></span>
                                     <span style="font-size: 0.7rem; color: var(--primary); font-weight: 600;" id="catalogCountLabel"></span>
@@ -981,7 +1196,7 @@
                             </div>
                         </div>
 
-                        <div style="margin-top: 1rem; padding: 0.75rem; background: var(--surface-subtle); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                        <div class="item-preview-box">
                             <span style="font-size: 0.85rem; color: var(--text-muted);" id="newProdBasicPreview">
                                 Basic: <strong style="color: var(--text-main);">₹ 1,000.00</strong> | 
                                 Tax: <strong style="color: var(--text-main);">₹ 180.00</strong>
@@ -1029,7 +1244,7 @@
                                         <th style="width: 100px;">Basic</th>
                                         <th style="width: 100px;">Tax</th>
                                         <th style="width: 110px;">Total (₹)</th>
-                                        <th style="width: 80px; text-align: right;">Action</th>
+                                        <th style="width: 110px; text-align: right;">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="productsTableBody">
@@ -1057,7 +1272,7 @@
                             </div>
                         </div>
 
-                        <div style="margin-top: 1.5rem; display: flex; justify-content: space-between;">
+                        <div class="step-actions">
                             <button class="btn btn-secondary" onclick="switchTab('tab-buyer')">
                                 <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
                                 <span>Previous</span>
@@ -1083,7 +1298,7 @@
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
                             <button class="btn btn-primary" onclick="generateAndDownloadPDF('download')">
                                 <i data-lucide="download" style="width: 18px; height: 18px;"></i>
                                 <span>Download PDF</span>
@@ -2133,8 +2348,8 @@
                                 </button>
                             </div>
                         </div>
-                        <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.35rem;">${escapeHtml(item.name)}</div>
-                        <div style="display: grid; grid-template-columns: repeat(${isSqft ? '2' : '3'}, 1fr); gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted);">
+                        <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.35rem; word-break: break-word;">${escapeHtml(item.name)}</div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(85px, 1fr)); gap: 0.4rem; font-size: 0.78rem; color: var(--text-muted);">
                             <div>HSN: <strong class="input-mono" style="color: var(--text-main);">${escapeHtml(item.hsncode || '-')}</strong></div>
                             <div>Qty: <strong class="input-mono" style="color: var(--text-main);">${item.quantity}</strong></div>
                             ${isSqft ? `<div>Sq.ft: <strong class="input-mono" style="color: var(--text-main);">${escapeHtml(item.sqft || (item.length + '*' + item.breadth))}</strong></div>` : ''}
