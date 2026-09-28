@@ -1664,12 +1664,35 @@
                                     <i data-lucide="printer" style="width: 18px; height: 18px;"></i>
                                     Download & Print Invoice
                                 </h2>
-                                <p class="card-subtitle">One-click generate official GST compliant PDF document.</p>
+                                <p class="card-subtitle">One-click generate official GST compliant PDF document with nested hierarchy storage.</p>
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
-                            <button class="btn btn-primary" onclick="generateAndDownloadPDF('download')">
+                        <!-- Storage Folder Status Banner -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                            <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
+                                <div style="width: 36px; height: 36px; border-radius: 6px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i data-lucide="folder" style="width: 20px; height: 20px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;">Hierarchy Storage Target</div>
+                                    <div id="storageFolderNameText" style="font-size: 0.88rem; font-weight: 700; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 280px;">
+                                        Local Downloads (Fallback)
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="chooseStorageDirectory()" style="font-size: 0.78rem; padding: 0.35rem 0.7rem;">
+                                <i data-lucide="folder-cog" style="width: 14px; height: 14px;"></i>
+                                <span id="storageFolderBtnText">Choose Folder</span>
+                            </button>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                            <button class="btn btn-primary" onclick="generateAndDownloadPDF('save_folder')">
+                                <i data-lucide="folder-symlink" style="width: 18px; height: 18px;"></i>
+                                <span>Save in Hierarchy</span>
+                            </button>
+                            <button class="btn btn-secondary" onclick="generateAndDownloadPDF('download')">
                                 <i data-lucide="download" style="width: 18px; height: 18px;"></i>
                                 <span>Download PDF</span>
                             </button>
@@ -1681,6 +1704,11 @@
                                 <i data-lucide="external-link" style="width: 18px; height: 18px;"></i>
                                 <span>Open in Tab</span>
                             </button>
+                        </div>
+
+                        <div style="font-size: 0.75rem; color: #64748b; line-height: 1.4; background: #f1f5f9; padding: 0.6rem 0.85rem; border-radius: 6px;">
+                            <i data-lucide="info" style="width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; color: #475569;"></i>
+                            <strong>Organized Auto-Hierarchy:</strong> <code>Invoices / YYYY / MM - Month / Buyer Name / [File].pdf</code>
                         </div>
                     </div>
                 </section>
@@ -1959,11 +1987,245 @@
             showToast(`Invoice No. incremented to ${nextNo}`);
         }
 
+        // ==========================================
+        // LOCAL HIERARCHY STORAGE (FILE SYSTEM ACCESS API + INDEXEDDB)
+        // ==========================================
+        const DB_NAME = 'InvoiceLocalFolderDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'handles';
+        const KEY_DIR_HANDLE = 'invoices_root_dir';
+        let currentDirHandle = null;
+
+        function openFolderDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function saveDirHandleToDB(handle) {
+            try {
+                const db = await openFolderDB();
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put(handle, KEY_DIR_HANDLE);
+                return new Promise((res) => {
+                    tx.oncomplete = () => res(true);
+                    tx.onerror = () => res(false);
+                });
+            } catch (e) {
+                console.warn('Error saving directory handle to IndexedDB:', e);
+                return false;
+            }
+        }
+
+        async function getSavedDirHandleFromDB() {
+            try {
+                const db = await openFolderDB();
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const req = tx.objectStore(STORE_NAME).get(KEY_DIR_HANDLE);
+                return new Promise((res) => {
+                    req.onsuccess = () => res(req.result || null);
+                    req.onerror = () => res(null);
+                });
+            } catch (e) {
+                console.warn('Error getting directory handle from IndexedDB:', e);
+                return null;
+            }
+        }
+
+        async function verifyDirPermission(handle, readWrite = true) {
+            if (!handle || !handle.queryPermission) return false;
+            const options = {};
+            if (readWrite) options.mode = 'readwrite';
+            try {
+                if ((await handle.queryPermission(options)) === 'granted') {
+                    return true;
+                }
+                if ((await handle.requestPermission(options)) === 'granted') {
+                    return true;
+                }
+            } catch (e) {
+                console.warn('Permission request error:', e);
+            }
+            return false;
+        }
+
+        function getMonthFolderName(dateStr) {
+            let d = dateStr ? new Date(dateStr) : new Date();
+            if (isNaN(d.getTime())) d = new Date();
+            const months = [
+                '01 - January', '02 - February', '03 - March', '04 - April',
+                '05 - May', '06 - June', '07 - July', '08 - August',
+                '09 - September', '10 - October', '11 - November', '12 - December'
+            ];
+            return {
+                year: d.getFullYear().toString(),
+                month: months[d.getMonth()]
+            };
+        }
+
+        function sanitizeFolderName(name) {
+            if (!name) return 'General';
+            return name.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 60) || 'General';
+        }
+
+        function getStructuredFallbackFileName(dateVal, buyerVal, cleanType, cleanInv) {
+            const { year, month } = getMonthFolderName(dateVal);
+            const cleanBuyer = sanitizeFolderName(buyerVal || 'Buyer');
+            return `Invoices_${year}_${month.replace(/\s+/g, '')}_${cleanBuyer}_${cleanType}_${cleanInv}.pdf`;
+        }
+
+        async function initStorageFolder() {
+            if (!('showDirectoryPicker' in window)) {
+                updateStorageFolderUI(null, false);
+                return;
+            }
+            try {
+                const handle = await getSavedDirHandleFromDB();
+                if (handle) {
+                    currentDirHandle = handle;
+                    updateStorageFolderUI(handle.name, true);
+                } else {
+                    updateStorageFolderUI(null, true);
+                }
+            } catch (e) {
+                updateStorageFolderUI(null, true);
+            }
+        }
+
+        function updateStorageFolderUI(folderName, isSupported = true) {
+            const textEl = document.getElementById('storageFolderNameText');
+            const btnTextEl = document.getElementById('storageFolderBtnText');
+            if (!textEl) return;
+
+            if (!isSupported) {
+                textEl.textContent = 'Browser Downloads (Structured)';
+                textEl.title = 'File System Access not available in this browser; files download with organized names';
+                if (btnTextEl) {
+                    btnTextEl.textContent = 'Not Supported';
+                    btnTextEl.parentElement.disabled = true;
+                }
+                return;
+            }
+
+            if (folderName) {
+                textEl.textContent = `📁 ${folderName} (Ready)`;
+                textEl.style.color = '#059669';
+                if (btnTextEl) btnTextEl.textContent = 'Change Folder';
+            } else {
+                textEl.textContent = 'Not Configured (Click to Select)';
+                textEl.style.color = '#64748b';
+                if (btnTextEl) btnTextEl.textContent = 'Select Folder';
+            }
+        }
+
+        async function chooseStorageDirectory() {
+            if (!('showDirectoryPicker' in window)) {
+                alert('File System Access API is not supported in this browser. Invoices will download with organized folder names instead.');
+                return;
+            }
+            try {
+                const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                if (handle) {
+                    await saveDirHandleToDB(handle);
+                    currentDirHandle = handle;
+                    updateStorageFolderUI(handle.name, true);
+                    showToast(`Storage target set to: "${handle.name}"`);
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Error selecting directory:', err);
+                    alert('Could not set directory: ' + err.message);
+                }
+            }
+        }
+
+        async function savePdfToHierarchicalFolder(blob, fileName, meta) {
+            const { year, month } = getMonthFolderName(meta.invoiceDate);
+            const cleanBuyer = sanitizeFolderName(meta.buyerName);
+            const cleanType = (meta.billType || 'INVOICE').replace(/[^a-zA-Z0-9]/g, '_');
+            const cleanInv = (meta.invoiceNo || 'INV').replace(/[^a-zA-Z0-9]/g, '_');
+
+            if (!('showDirectoryPicker' in window)) {
+                // Fallback to structured download
+                const fallbackName = getStructuredFallbackFileName(meta.invoiceDate, meta.buyerName, cleanType, cleanInv);
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = fallbackName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+                showToast(`Saved via download: ${fallbackName}`);
+                return;
+            }
+
+            try {
+                let rootHandle = currentDirHandle;
+                let hasPerm = false;
+                if (rootHandle) {
+                    hasPerm = await verifyDirPermission(rootHandle, true);
+                }
+
+                if (!rootHandle || !hasPerm) {
+                    showToast('Please choose or confirm your Invoices root folder...');
+                    rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                    if (!rootHandle) return;
+                    await saveDirHandleToDB(rootHandle);
+                    currentDirHandle = rootHandle;
+                    updateStorageFolderUI(rootHandle.name, true);
+                }
+
+                // Create Year Directory (e.g. "2026")
+                const yearHandle = await rootHandle.getDirectoryHandle(year, { create: true });
+                
+                // Create Month Directory (e.g. "09 - September")
+                const monthHandle = await yearHandle.getDirectoryHandle(month, { create: true });
+
+                // Create Buyer Directory (e.g. "Bird_Ink")
+                const buyerHandle = await monthHandle.getDirectoryHandle(cleanBuyer, { create: true });
+
+                // Create and write File
+                const fileHandle = await buyerHandle.getFileHandle(fileName, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+
+                showToast(`✅ Saved to ${rootHandle.name} / ${year} / ${month} / ${cleanBuyer} / ${fileName}`, 4000);
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    showToast('Folder selection was cancelled.', 3000);
+                } else {
+                    console.error('Error writing to folder hierarchy:', err);
+                    // Fallback download if saving fails
+                    const fallbackName = getStructuredFallbackFileName(meta.invoiceDate, meta.buyerName, cleanType, cleanInv);
+                    const blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = fallbackName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+                    alert(`Could not write directly to folder (${err.message}). Downloaded as organized file instead.`);
+                }
+            }
+        }
+
         // Initialize App on DOM load
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             loadSellerFromSessionOrLocal();
             loadInvoiceNumberFromStorage();
+            initStorageFolder();
             loadProductsCatalog();
             populateFormFields();
             renderProducts();
@@ -3699,8 +3961,18 @@
                         }
                     });
                     showToast(`${billType} (#${generatedInvNo}) PDF opened!`);
+                } else if (action === 'save_folder') {
+                    pdfDoc.getBlob(async (blob) => {
+                        await savePdfToHierarchicalFolder(blob, fileName, {
+                            invoiceDate: getVal('invoiceDate'),
+                            buyerName: getVal('buyerName') || 'General',
+                            billType: billType,
+                            invoiceNo: generatedInvNo
+                        });
+                    });
                 } else {
-                    pdfDoc.download(fileName);
+                    const structuredDownloadName = getStructuredFallbackFileName(getVal('invoiceDate'), getVal('buyerName'), cleanType, cleanInv);
+                    pdfDoc.download(structuredDownloadName);
                     showToast(`${billType} (#${generatedInvNo}) downloaded successfully!`);
                 }
 
