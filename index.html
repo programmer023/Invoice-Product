@@ -15,31 +15,33 @@
 
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --primary-light: #eef2ff;
-            --primary-border: #c7d2fe;
-            --secondary: #0f172a;
+            --primary: #0071e3;
+            --primary-hover: #0077ed;
+            --primary-light: #e8f2fd;
+            --primary-border: rgba(0, 113, 227, 0.22);
+            --secondary: #1d1d1f;
             --surface: #ffffff;
-            --surface-subtle: #f8fafc;
+            --surface-subtle: #fbfbfd;
             --surface-card: #ffffff;
-            --border: #e2e8f0;
-            --border-focus: #818cf8;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --text-subtle: #94a3b8;
-            --success: #10b981;
-            --success-light: #ecfdf5;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --danger-light: #fef2f2;
+            --border: rgba(0, 0, 0, 0.08);
+            --border-focus: #0071e3;
+            --text-main: #1d1d1f;
+            --text-muted: #6e6e73;
+            --text-subtle: #86868b;
+            --success: #34c759;
+            --success-light: #eafaf1;
+            --warning: #ff9500;
+            --danger: #ff3b30;
+            --danger-light: #fff2f2;
             --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 16px;
-            --radius-xl: 20px;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+            --radius-xl: 22px;
+            --radius-pill: 9999px;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.07), 0 2px 6px rgba(0, 0, 0, 0.04);
+            --shadow-floating: 0 20px 40px -10px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         html, body {
@@ -58,11 +60,13 @@
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, 'Plus Jakarta Sans', sans-serif;
+            background-color: #f5f5f7;
             color: var(--text-main);
             line-height: 1.5;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         /* Container Layout (Full width with fluid padding) */
@@ -70,13 +74,13 @@
             width: 100%;
             max-width: 100%;
             margin: 0 auto;
-            padding: 0.75rem 1.25rem;
+            padding: 0.85rem 1.25rem;
             box-sizing: border-box;
         }
 
         @media (max-width: 768px) {
             .app-container {
-                padding: 0.4rem 0.5rem;
+                padding: 0.5rem 0.5rem;
             }
         }
 
@@ -108,19 +112,19 @@
             width: 100%;
         }
 
-        /* Tabs / Navigation Pills */
+        /* Apple HIG Segmented Navigation Tabs */
         .step-tabs {
             display: flex;
-            gap: 0.5rem;
-            background: var(--surface);
-            padding: 0.4rem;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border);
-            margin-bottom: 1rem;
-            overflow-x: auto;
+            gap: 0.35rem;
+            background: rgba(120, 120, 128, 0.1);
+            padding: 0.35rem;
+            border-radius: 14px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            margin-bottom: 1.25rem;
             width: 100%;
             box-sizing: border-box;
-            scrollbar-width: thin;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
 
         @media (max-width: 640px) {
@@ -129,12 +133,12 @@
                 grid-template-columns: repeat(2, 1fr);
                 gap: 0.35rem;
                 padding: 0.35rem;
-                overflow-x: visible;
+                background: rgba(120, 120, 128, 0.12);
             }
             .tab-btn {
                 min-width: 0 !important;
-                padding: 0.55rem 0.35rem !important;
-                font-size: 0.76rem !important;
+                padding: 0.6rem 0.4rem !important;
+                font-size: 0.78rem !important;
                 justify-content: center !important;
                 white-space: normal !important;
                 text-align: center !important;
@@ -145,11 +149,13 @@
         @media (min-width: 641px) {
             .step-tabs {
                 position: sticky;
-                top: 0.4rem;
+                top: 0.5rem;
                 z-index: 50;
-                background: rgba(255, 255, 255, 0.96);
-                backdrop-filter: blur(12px);
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+                background: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+                border: 1px solid rgba(0, 0, 0, 0.06);
             }
         }
 
@@ -160,39 +166,45 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            padding: 0.65rem 0.85rem;
-            border-radius: var(--radius-md);
+            padding: 0.65rem 0.9rem;
+            border-radius: 10px;
             border: none;
             background: transparent;
             color: var(--text-muted);
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-size: 0.86rem;
+            font-weight: 500;
             font-family: inherit;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             white-space: nowrap;
+            user-select: none;
         }
 
         .tab-btn:hover {
             color: var(--text-main);
-            background: var(--surface-subtle);
+            background: rgba(255, 255, 255, 0.6);
         }
 
         .tab-btn.active {
             background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(0, 113, 227, 0.3), 0 1px 3px rgba(0, 113, 227, 0.15);
         }
 
-        /* Card Panels */
+        .tab-btn.active i {
+            color: #ffffff;
+        }
+
+        /* Apple Styled Cards */
         .card {
             background: var(--surface);
             border-radius: var(--radius-lg);
             border: 1px solid var(--border);
             box-shadow: var(--shadow-sm);
-            padding: clamp(0.9rem, 2vw, 1.35rem);
+            padding: clamp(0.95rem, 2vw, 1.4rem);
             margin-bottom: 1.25rem;
-            transition: box-shadow 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             width: 100%;
             box-sizing: border-box;
             min-width: 0;
@@ -200,6 +212,7 @@
 
         .card:hover {
             box-shadow: var(--shadow-md);
+            border-color: rgba(0, 0, 0, 0.12);
         }
 
         .card-header {
@@ -240,10 +253,11 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: var(--secondary);
             flex-wrap: wrap;
+            letter-spacing: -0.01em;
         }
 
         .card-title i {
@@ -252,10 +266,10 @@
         }
 
         .card-subtitle {
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             color: var(--text-muted);
             font-weight: 400;
-            margin-top: 0.15rem;
+            margin-top: 0.2rem;
         }
 
         /* Form Inputs & Grid */
@@ -271,11 +285,13 @@
             .form-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .form-grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .form-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .form-grid.cols-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
         @media (min-width: 900px) {
             .form-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
             .form-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .form-grid.cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
         }
 
         .form-group {
@@ -314,23 +330,25 @@
             color: var(--danger);
         }
 
+        /* Apple Style Inputs & Selects */
         .input-control, .select-control {
             width: 100%;
-            padding: 0.65rem 0.85rem;
+            padding: 0.68rem 0.85rem;
             font-size: 0.9rem;
             font-family: inherit;
             color: var(--text-main);
-            background: var(--surface-subtle);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            transition: all 0.2s ease;
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: 10px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             outline: none;
+            box-sizing: border-box;
         }
 
         .input-control:focus, .select-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
             background: #ffffff;
-            border-color: var(--border-focus);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
         }
 
         .input-control::placeholder {
@@ -343,70 +361,77 @@
             font-weight: 600;
         }
 
-        /* Buttons */
+        /* Apple HIG Interactive Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.45rem;
-            padding: 0.65rem 1.1rem;
+            padding: 0.65rem 1.15rem;
             font-size: 0.88rem;
             font-weight: 600;
             font-family: inherit;
-            border-radius: var(--radius-sm);
+            border-radius: 10px;
             border: 1px solid transparent;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
             white-space: nowrap;
+            user-select: none;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
         }
 
         .btn-primary {
             background: var(--primary);
             color: white;
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+            box-shadow: 0 1px 3px rgba(0, 113, 227, 0.25);
         }
 
         .btn-primary:hover {
             background: var(--primary-hover);
-            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
         }
 
         .btn-secondary {
-            background: var(--surface-subtle);
+            background: rgba(120, 120, 128, 0.08);
             color: var(--text-main);
-            border-color: var(--border);
+            border: 1px solid rgba(0, 0, 0, 0.06);
         }
 
         .btn-secondary:hover {
-            background: #e2e8f0;
+            background: rgba(120, 120, 128, 0.14);
         }
 
         .btn-success {
             background: var(--success);
             color: white;
+            box-shadow: 0 1px 3px rgba(52, 199, 89, 0.25);
         }
         .btn-success:hover {
-            background: #059669;
+            background: #2fb350;
+            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
         }
 
         .btn-danger {
             background: var(--danger-light);
             color: var(--danger);
-            border-color: rgba(239, 68, 68, 0.2);
+            border-color: rgba(255, 59, 48, 0.2);
         }
         .btn-danger:hover {
             background: #fee2e2;
         }
 
         .btn-sm {
-            padding: 0.4rem 0.75rem;
+            padding: 0.42rem 0.8rem;
             font-size: 0.78rem;
-            border-radius: 6px;
+            border-radius: 8px;
         }
 
         .btn-icon-only {
             padding: 0.5rem;
-            border-radius: var(--radius-sm);
+            border-radius: 8px;
         }
 
         /* Products Table & Mobile Cards */
@@ -419,6 +444,7 @@
             overflow-x: auto;
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
+            background: white;
         }
 
         @media (min-width: 768px) {
@@ -440,17 +466,17 @@
         .invoice-table th {
             background: var(--surface-subtle);
             color: var(--text-muted);
-            font-weight: 700;
+            font-weight: 600;
             text-align: left;
-            padding: 0.65rem 0.75rem;
+            padding: 0.7rem 0.85rem;
             border-bottom: 1px solid var(--border);
-            font-size: 0.75rem;
+            font-size: 0.74rem;
             text-transform: uppercase;
             letter-spacing: 0.04em;
         }
 
         .invoice-table td {
-            padding: 0.65rem 0.75rem;
+            padding: 0.7rem 0.85rem;
             border-bottom: 1px solid var(--border);
             vertical-align: middle;
         }
@@ -460,10 +486,10 @@
         }
 
         .invoice-table tr.is-editing-row {
-            background-color: #eff6ff !important;
+            background-color: var(--primary-light) !important;
         }
         .invoice-table tr.is-editing-row td {
-            border-bottom-color: #bfdbfe;
+            border-bottom-color: var(--primary-border);
         }
 
         /* Mobile Item Cards */
@@ -474,16 +500,17 @@
         }
 
         .mobile-item-card {
-            background: var(--surface-subtle);
+            background: #ffffff;
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
-            padding: 0.9rem;
+            padding: 0.95rem;
             position: relative;
+            box-shadow: var(--shadow-sm);
         }
 
         .mobile-item-card.is-editing-card {
             border-color: var(--primary) !important;
-            background-color: #eff6ff !important;
+            background-color: var(--primary-light) !important;
             box-shadow: 0 0 0 1px var(--primary);
         }
 
@@ -499,13 +526,13 @@
             color: var(--primary);
             font-weight: 700;
             font-size: 0.75rem;
-            padding: 0.2rem 0.5rem;
-            border-radius: 6px;
+            padding: 0.2rem 0.55rem;
+            border-radius: var(--radius-pill);
         }
 
         .mobile-card-totals {
             margin-top: 0.75rem;
-            padding-top: 0.6rem;
+            padding-top: 0.65rem;
             border-top: 1px dashed var(--border);
             display: flex;
             justify-content: space-between;
@@ -519,11 +546,12 @@
             display: inline-flex;
             align-items: center;
             gap: 0.35rem;
-            background: var(--surface-subtle);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 0.2rem 0.55rem;
+            background: rgba(120, 120, 128, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: var(--radius-pill);
+            padding: 0.22rem 0.65rem;
             font-size: 0.74rem;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
             user-select: none;
@@ -552,7 +580,7 @@
 
         .chip-del-btn:hover {
             color: var(--danger);
-            background: rgba(239, 68, 68, 0.15);
+            background: rgba(255, 59, 48, 0.15);
         }
 
         /* Top Invoice Configuration Bar */
@@ -561,7 +589,7 @@
             grid-template-columns: 1fr;
             gap: 0.65rem;
             margin-bottom: 0.85rem;
-            padding: 0.65rem;
+            padding: 0.75rem;
             background: var(--primary-light);
             border: 1px solid var(--primary-border);
             border-radius: var(--radius-md);
@@ -573,15 +601,16 @@
             .config-bar-compact {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
                 gap: 0.5rem;
-                padding: 0.45rem 0.65rem;
+                padding: 0.5rem 0.75rem;
             }
         }
 
         .item-preview-box {
             margin-top: 1rem;
-            padding: 0.75rem;
+            padding: 0.85rem;
             background: var(--surface-subtle);
-            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -596,6 +625,32 @@
                 flex-direction: column;
                 align-items: stretch;
                 text-align: center;
+            }
+        }
+
+        /* End of Line Item Form Action Bar */
+        .item-form-actions {
+            margin-top: 1rem;
+            padding-top: 0.85rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 640px) {
+            .item-form-actions {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+            .item-form-actions .btn {
+                width: 100%;
+                justify-content: center;
+                padding: 0.75rem 1rem;
+                font-size: 0.92rem;
             }
         }
 
@@ -621,7 +676,7 @@
             .step-actions .btn {
                 width: 100%;
                 justify-content: center;
-                padding: 0.7rem 1rem;
+                padding: 0.75rem 1rem;
             }
         }
 
@@ -792,38 +847,44 @@
             }
         }
 
-        /* Toast Notifications */
+        /* Apple Dynamic Island Capsule Toast Notifications */
         .toast-container {
             position: fixed;
             top: 1.25rem;
-            right: 1.25rem;
-            z-index: 100;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
             display: flex;
             flex-direction: column;
+            align-items: center;
             gap: 0.5rem;
             pointer-events: none;
-            max-width: calc(100vw - 2.5rem);
+            max-width: calc(100vw - 2rem);
         }
 
         .toast {
-            background: #0f172a;
-            color: white;
-            padding: 0.75rem 1.1rem;
-            border-radius: var(--radius-md);
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: var(--shadow-lg);
+            background: rgba(29, 29, 31, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: #ffffff;
+            padding: 0.65rem 1.35rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.86rem;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            animation: slideIn 0.3s ease forwards;
+            gap: 0.55rem;
+            animation: capsuleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             pointer-events: auto;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             word-break: break-word;
         }
 
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        @keyframes capsuleIn {
+            from { transform: translateY(-20px) scale(0.9); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
         }
 
         /* Quick Profile Buttons */
@@ -1137,27 +1198,17 @@
                                 </h2>
                                 <p class="card-subtitle" id="itemFormSubtitle">Enter product description, dimensions, quantity, rate, and tax.</p>
                             </div>
-                            <div class="card-header-actions">
-                                <button type="button" class="btn btn-secondary btn-sm" id="cancelEditBtn" onclick="cancelEditProduct()" style="display: none;">
-                                    <i data-lucide="x" style="width: 15px; height: 15px;"></i>
-                                    <span>Cancel Edit</span>
-                                </button>
-                                <button type="button" class="btn btn-primary btn-sm" id="itemFormSubmitBtn" onclick="addNewProductFromForm()">
-                                    <i data-lucide="plus-circle" id="itemFormSubmitIcon" style="width: 15px; height: 15px;"></i>
-                                    <span id="itemFormSubmitText">Add to Invoice</span>
-                                </button>
-                            </div>
                         </div>
 
-                        <div class="form-grid cols-4" id="itemFormGrid">
-                            <div class="form-group span-2">
+                        <div class="form-grid cols-5" id="itemFormGrid">
+                            <div class="form-group full-width">
                                 <label class="form-label">
                                     <span>Description of Goods / Services <span class="required">*</span></span>
                                     <span style="font-size: 0.7rem; color: var(--primary); font-weight: 600;" id="catalogCountLabel"></span>
                                 </label>
                                 <input type="text" id="newProdName" class="input-control" list="savedItemSuggestions" placeholder="e.g. Acrylic Sheet / Screen Printing Ink" oninput="handleDescriptionInput(this.value)" autocomplete="off">
                                 <datalist id="savedItemSuggestions"></datalist>
-                                <div id="quickItemChips" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.4rem;"></div>
+                                <div id="quickItemChips" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.45rem;"></div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">HSN / SAC Code</label>
@@ -1204,6 +1255,18 @@
                             <span style="font-size: 0.95rem; font-weight: 700; color: var(--primary);">
                                 Total: <span id="newProdTotalPreview">₹ 1,180.00</span>
                             </span>
+                        </div>
+
+                        <!-- End-of-Form Action Button Bar (High Accessibility on Mobile) -->
+                        <div class="item-form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelEditBottomBtn" onclick="cancelEditProduct()" style="display: none;">
+                                <i data-lucide="x" style="width: 15px; height: 15px;"></i>
+                                <span>Cancel Edit</span>
+                            </button>
+                            <button type="button" class="btn btn-primary" id="itemFormBottomSubmitBtn" onclick="addNewProductFromForm()">
+                                <i data-lucide="plus-circle" id="itemFormBottomSubmitIcon" style="width: 16px; height: 16px;"></i>
+                                <span id="itemFormBottomSubmitText">Add to Invoice</span>
+                            </button>
                         </div>
                     </div>
 
@@ -1714,8 +1777,9 @@
                 if (savedProductsCatalog.length === 0) {
                     chipsContainer.innerHTML = `<span style="font-size: 0.72rem; color: var(--text-subtle); font-style: italic;">No saved tags yet for ${flavorLabel} flavor</span>`;
                 } else {
-                    // Show up to 8 quick clickable chips with delete button
-                    const topItems = savedProductsCatalog.slice(0, 8);
+                    // Show up to 5 quick clickable chips with delete button to prevent UI distortion
+                    const topItems = savedProductsCatalog.slice(0, 5);
+                    const remainingCount = savedProductsCatalog.length - 5;
                     chipsContainer.innerHTML = topItems.map((p, idx) => `
                         <span class="catalog-chip" onclick="selectSavedCatalogItem(${idx})" title="Click to auto-fill">
                             <i data-lucide="tag" style="width: 11px; height: 11px; color: var(--primary);"></i>
@@ -1724,7 +1788,7 @@
                                 <i data-lucide="x" style="width: 11px; height: 11px;"></i>
                             </button>
                         </span>
-                    `).join('');
+                    `).join('') + (remainingCount > 0 ? `<span style="font-size: 0.72rem; color: var(--text-muted); align-self: center; padding-left: 0.2rem;" title="Type in description box to search all ${savedProductsCatalog.length} saved items">+${remainingCount} more in search</span>` : '');
                     lucide.createIcons();
                 }
             }
@@ -2103,13 +2167,13 @@
             // Update Form Header & Action Buttons
             const titleEl = document.getElementById('itemFormTitleText');
             const subtitleEl = document.getElementById('itemFormSubtitle');
-            const submitTextEl = document.getElementById('itemFormSubmitText');
-            const cancelBtn = document.getElementById('cancelEditBtn');
+            const submitBottomTextEl = document.getElementById('itemFormBottomSubmitText');
+            const cancelBottomBtn = document.getElementById('cancelEditBottomBtn');
 
             if (titleEl) titleEl.innerText = `Edit Line Item (#${item.no})`;
             if (subtitleEl) subtitleEl.innerText = 'Modify product details and click "Update Item" to save.';
-            if (submitTextEl) submitTextEl.innerText = 'Update Item';
-            if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+            if (submitBottomTextEl) submitBottomTextEl.innerText = 'Update Item';
+            if (cancelBottomBtn) cancelBottomBtn.style.display = 'inline-flex';
 
             calculateNewProdPreview();
             renderProducts();
@@ -2143,13 +2207,13 @@
 
             const titleEl = document.getElementById('itemFormTitleText');
             const subtitleEl = document.getElementById('itemFormSubtitle');
-            const submitTextEl = document.getElementById('itemFormSubmitText');
-            const cancelBtn = document.getElementById('cancelEditBtn');
+            const submitBottomTextEl = document.getElementById('itemFormBottomSubmitText');
+            const cancelBottomBtn = document.getElementById('cancelEditBottomBtn');
 
             if (titleEl) titleEl.innerText = 'Add New Line Item';
             if (subtitleEl) subtitleEl.innerText = 'Enter product description, dimensions, quantity, rate, and tax.';
-            if (submitTextEl) submitTextEl.innerText = 'Add to Invoice';
-            if (cancelBtn) cancelBtn.style.display = 'none';
+            if (submitBottomTextEl) submitBottomTextEl.innerText = 'Add to Invoice';
+            if (cancelBottomBtn) cancelBottomBtn.style.display = 'none';
 
             calculateNewProdPreview();
             lucide.createIcons();
