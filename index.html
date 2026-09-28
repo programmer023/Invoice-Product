@@ -2261,20 +2261,24 @@
                     p.taxAmount = 0;
                     p.total = p.rateQuantity;
                 } else if (activeTaxType === 'IGST') {
-                    if (!p.igstPer || p.igstPer === 0) {
-                        p.igstPer = (p.cgstPer || 9) + (p.sgstPer || 9);
+                    if (typeof p.igstPer !== 'number' || isNaN(p.igstPer) || p.igstPer === 0) {
+                        const c = (typeof p.cgstPer === 'number' && !isNaN(p.cgstPer)) ? p.cgstPer : 9;
+                        const s = (typeof p.sgstPer === 'number' && !isNaN(p.sgstPer)) ? p.sgstPer : 9;
+                        p.igstPer = c + s;
                     }
-                    p.taxAmount = p.rateQuantity * (p.igstPer / 100);
-                    p.total = p.rateQuantity + p.taxAmount;
+                    p.taxAmount = Math.round(p.rateQuantity * (p.igstPer / 100) * 100) / 100;
+                    p.total = Math.round((p.rateQuantity + p.taxAmount) * 100) / 100;
                 } else { // 'GST' (CGST + SGST)
-                    if (!p.cgstPer && !p.sgstPer) {
-                        const half = (p.igstPer || 18) / 2;
-                        p.cgstPer = half;
-                        p.sgstPer = half;
+                    if (typeof p.cgstPer !== 'number' || typeof p.sgstPer !== 'number') {
+                        const totalRate = (typeof p.igstPer === 'number' && !isNaN(p.igstPer)) ? p.igstPer : 18;
+                        p.cgstPer = totalRate / 2;
+                        p.sgstPer = totalRate / 2;
                     }
-                    const taxPer = (p.cgstPer || 9) + (p.sgstPer || 9);
-                    p.taxAmount = p.rateQuantity * (taxPer / 100);
-                    p.total = p.rateQuantity + p.taxAmount;
+                    const c = (typeof p.cgstPer === 'number' && !isNaN(p.cgstPer)) ? p.cgstPer : 9;
+                    const s = (typeof p.sgstPer === 'number' && !isNaN(p.sgstPer)) ? p.sgstPer : 9;
+                    const taxPer = c + s;
+                    p.taxAmount = Math.round(p.rateQuantity * (taxPer / 100) * 100) / 100;
+                    p.total = Math.round((p.rateQuantity + p.taxAmount) * 100) / 100;
                 }
             });
 
@@ -2751,23 +2755,31 @@
             let cgstTotal = 0;
             let sgstTotal = 0;
             let igstTotal = 0;
-            let grandTotal = 0;
 
             products.forEach(p => {
-                basicTotal += p.rateQuantity;
+                const rateQty = typeof p.rateQuantity === 'number' ? p.rateQuantity : 0;
+                basicTotal += rateQty;
                 if (p.taxType === 'N/A') {
-                    // Skip tax calculation
+                    // Non-taxable
                 } else if (p.taxType === 'IGST') {
-                    igstTotal += (p.igstPer / 100) * p.rateQuantity;
+                    const igstP = typeof p.igstPer === 'number' ? p.igstPer : 0;
+                    igstTotal += (igstP / 100) * rateQty;
                 } else {
-                    cgstTotal += (p.cgstPer / 100) * p.rateQuantity;
-                    sgstTotal += (p.sgstPer / 100) * p.rateQuantity;
+                    const cgstP = typeof p.cgstPer === 'number' ? p.cgstPer : 0;
+                    const sgstP = typeof p.sgstPer === 'number' ? p.sgstPer : 0;
+                    cgstTotal += (cgstP / 100) * rateQty;
+                    sgstTotal += (sgstP / 100) * rateQty;
                 }
             });
 
-            const roundOffVal = parseFloat(document.getElementById('roundOffInput').value) || 0;
-            const totalTax = cgstTotal + sgstTotal + igstTotal;
-            grandTotal = basicTotal + totalTax + roundOffVal;
+            basicTotal = Math.round(basicTotal * 100) / 100;
+            cgstTotal = Math.round(cgstTotal * 100) / 100;
+            sgstTotal = Math.round(sgstTotal * 100) / 100;
+            igstTotal = Math.round(igstTotal * 100) / 100;
+
+            const roundOffVal = parseFloat((document.getElementById('roundOffInput') && document.getElementById('roundOffInput').value) || 0) || 0;
+            const totalTax = Math.round((cgstTotal + sgstTotal + igstTotal) * 100) / 100;
+            const grandTotal = Math.round((basicTotal + totalTax + roundOffVal) * 100) / 100;
 
             const subtotalEl = document.getElementById('subtotalDisplay');
             if (subtotalEl) subtotalEl.innerText = formatCurrency(basicTotal);
@@ -3712,12 +3724,20 @@
 
         // Format Indian Number System (Lakhs & Crores)
         function formatNumberIndian(num) {
-            num = Number(num).toFixed(2);
-            const parts = num.split('.');
-            let n1 = parts[0];
-            const n2 = parts[1];
-            n1 = n1.replace(/(\d)(?=(\d\d)+\d$)/g, "$1,");
-            return n2 ? n1 + '.' + n2 : n1;
+            let val = Number(num || 0);
+            if (isNaN(val) || Math.abs(val) < 0.0001) val = 0;
+            const isNeg = val < 0;
+            const fixed = Math.abs(val).toFixed(2);
+            const [intPart, decPart] = fixed.split('.');
+
+            let lastThree = intPart.slice(-3);
+            let otherNumbers = intPart.slice(0, -3);
+            if (otherNumbers !== '') {
+                lastThree = ',' + lastThree;
+            }
+            const formattedInt = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
+            const res = formattedInt + (decPart ? '.' + decPart : '');
+            return isNeg ? '-' + res : res;
         }
 
         function formatCurrency(num) {
@@ -3746,10 +3766,15 @@
 
         // Number to Words for Indian Currency
         function numberToWordsIndian(amount) {
-            if (isNaN(amount) || amount === 0) return 'Zero Rupees Only';
+            const cleanAmount = Math.round(Number(amount || 0) * 100) / 100;
+            if (isNaN(cleanAmount) || cleanAmount === 0) return 'Zero Rupees Only';
 
-            const num = Math.floor(amount);
-            const paise = Math.round((amount - num) * 100);
+            let num = Math.floor(cleanAmount);
+            let paise = Math.round((cleanAmount - num) * 100);
+            if (paise >= 100) {
+                num += Math.floor(paise / 100);
+                paise %= 100;
+            }
 
             function convertChunk(n) {
                 const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
